@@ -19,7 +19,6 @@ cmap = plt.get_cmap("twilight")
 color_plot_r = sns.cubehelix_palette(4, reverse=True, rot=0.2)[1]
 color_plot_b = sns.cubehelix_palette(4, reverse=True, rot=-0.2)[1]
 
-# cmap = plt.get_cmap("hsv")
 from matplotlib import cm, rc
 
 rc("text", usetex=True)
@@ -71,7 +70,7 @@ class OptimizeField(nn.Module):
         return self.grid_list
 
 
-def energy_loss_nima(grid_list, nbr):
+def energy_loss(grid_list, nbr):
     """
     Computes the energy of the configuration in the XY model.
 
@@ -105,23 +104,17 @@ x = np.arange(grid_size)
 y = np.arange(grid_size)
 X, Y = np.meshgrid(x, y)
 
-final_lr = 1e0  # 1e-2
-opts = ["Adam"]  # , "SGD"]
+final_lr = 1e-2
+opts = ["Adam", "SGD"]
 for opt_name in opts:
     if opt_name == "Adam":
         epochs = 1000
-        # lrs = [1e2, 1e1, 1e0, 1e-1, 1e-2]
-        lrs = [1e2]
+        lrs = [1e2, 1e1, 1e0, 1e-1, 1e-2]
     else:
         epochs = 50000
         lrs = [1e4, 1e3, 1e2, 1e1, 1e0]
 
     for lr in lrs:
-        # while True:
-        #     seed_n = np.random.randint(0, 100000)
-        #     print(f"Seed: {seed_n}")
-        #     torch.manual_seed(seed_n)
-        #     np.random.seed(seed_n)
         grid_list = 2 * np.pi * torch.rand(grid_size**2)
         grid = grid_list.reshape(grid_size, grid_size)
         s = torch.stack([torch.cos(grid), torch.sin(grid)])
@@ -143,7 +136,7 @@ for opt_name in opts:
         for epoch in range(1, epochs + 1):
             model.train()
             s_e = model()
-            loss = energy_loss_nima(s_e, model.get_nbr())
+            loss = energy_loss(s_e, model.get_nbr())
 
             losses.append(loss.item())
             grids.append(model.get_grid().clone().detach() % (2 * np.pi))
@@ -169,8 +162,7 @@ for opt_name in opts:
             cmap=cmap,
             scale=20,
             width=0.005,
-            # scale=40,
-        )  # use the angles as color (normalized)
+        )
         cbar = plt.colorbar(
             quiver_n,
             ax=ax_n,
@@ -181,7 +173,6 @@ for opt_name in opts:
         ax_n.set_xticklabels([])
         ax_n.set_yticklabels([])
         plt.title(r"$H(\bm{s})=$" + rf"${energy_loss_nima(s_e, model.get_nbr()):0.8f}$")
-        # plt.title(f"End: opt={opt_name} lr={lr}\tLoss={losses[-1]}")
         plt.savefig(
             f"figs/quiver_se_opt={opt_name}_lr={lr}_seed={seed}.pdf",
             bbox_inches="tight",
@@ -192,8 +183,8 @@ for opt_name in opts:
 
 
 # generate gauge field
-prod = 0.25  # 0.25
-add = 0  # .25
+prod = 0.25
+add = 0
 plt.figure(figsize=(10, 2))  # WxH
 t = np.linspace(0, 1, 1000)
 sine = prod * np.cos(2 * np.pi * t) - add
@@ -256,16 +247,11 @@ ax = sns.heatmap(
     cbar_kws={"ticks": [-0.523599, 0, 0.523599]},
 )
 ax.collections[0].colorbar.set_ticklabels([r"$-\pi/6$", "0", r"$\pi/6$"])
-# plt.clim(-0.55, 0.55)
 plt.axis("off")
-# plt.gca().images[-1].colorbar.ax.set_yticklabels([r"$-\pi/6$", "0", r"$\pi/6$"])
 plt.savefig(f"figs/field_xy.pdf", bbox_inches="tight")
 plt.show()
 plt.close()
 
-print((field_x + field_y).max())
-print((field_x + field_y).min())
-# f_field = field * s_n.numpy()
 n_grids = grids[-1] + field_x + field_y
 s_p = torch.stack([torch.cos(n_grids), torch.sin(n_grids)])
 fig_n = plt.figure()
@@ -279,8 +265,7 @@ quiver_n = ax_n.quiver(
     cmap=cmap,
     scale=20,
     width=0.005,
-    # scale=40,
-)  # use the angles as color (normalized)
+)
 cbar = plt.colorbar(
     quiver_n,
     ax=ax_n,
@@ -294,94 +279,4 @@ plt.title(
 ax_n.set_xticklabels([])
 ax_n.set_yticklabels([])
 plt.savefig(f"figs/quiver_se_seed={seed}_end.pdf", bbox_inches="tight")
-# plt.title(f"End: opt={opt_name} lr={lr}\tLoss={losses[-1]}")
-# plt.savefig(f"figs/quiver_se_opt={opt_name}_lr={lr}_seed={seed}.pdf")
 plt.show()
-
-# print(f_field)
-# print(s_n)
-
-# # plot loss
-# plt.plot(range(len(losses)), losses)
-# plt.xlim(-epochs // 50, epochs + epochs // 50)
-# plt.ylim(-1.1, 0.1)
-# plt.xlabel("Epoch")
-# plt.ylabel("Loss")
-# plt.title("Loss over epochs")
-# plt.savefig("figs/loss.pdf")
-# plt.show()
-# plt.close()
-
-# step = epochs // 20  # good idea to make epochs // 100 for the gif
-
-
-# # gen gif for quiver plot
-# figur = plt.figure()
-# ax = plt.gca()
-# plt.plot(range(len([losses[0]])), losses[0])
-# plt.xlim(-epochs // 50, epochs + epochs // 50)
-# plt.ylim(-1.1, 0.1)
-# plt.xlabel("Epoch")
-# plt.ylabel("Loss")
-# plt.title("Loss over epochs")
-
-
-# def animate_l(i):
-#     ax.clear()
-#     line = plt.plot(range(len(losses[: step * i + 1])), losses[: step * i + 1])
-#     plt.xlim(-epochs // 50, epochs + epochs // 50)
-#     plt.ylim(-1.1, 0.1)
-#     plt.xlabel("Epoch")
-#     plt.ylabel("Loss")
-#     plt.title("Loss over epochs")
-#     return [line]
-
-
-# anim = animation.FuncAnimation(figur, animate_l, frames=epochs // step, repeat=True)
-# writer = animation.PillowWriter(fps=5)
-# anim.save("figs/loss.gif", writer=writer, dpi=300)
-# plt.show()
-# plt.close()
-
-# step = epochs // 100  # good idea to make epochs // 100 for the gif
-
-# # gen gif for quiver plot
-# figur = plt.figure()
-# ax = plt.gca()
-# s_n = torch.stack([torch.cos(grids[0]), torch.sin(grids[0])])
-# quiver = ax.quiver(
-#     X,
-#     Y,
-#     s_n[0],
-#     s_n[1],
-#     grids[0] / (2 * np.pi),
-#     cmap=cmap,
-#     scale=40,
-# )  # use the angles as color (normalized)
-# plt.colorbar(quiver, ax=ax)
-# plt.title("Configuration evolution")
-
-
-# def animate_q(i):
-#     ax.clear()
-#     ax.set_title("Configuration evolution")
-#     s_n = torch.stack([torch.cos(grids[step * i]), torch.sin(grids[step * i])])
-#     quiver = ax.quiver(
-#         X,
-#         Y,
-#         s_n[0],
-#         s_n[1],
-#         grids[step * i] / (2 * np.pi),
-#         cmap=cmap,
-#         scale=40,
-#     )  # use the angles as color (normalized)
-
-#     # plt.colorbar(im, ax=ax)
-#     return [quiver]
-
-
-# anim = animation.FuncAnimation(figur, animate_q, frames=epochs // step, repeat=True)
-# writer = animation.PillowWriter(fps=5)
-# anim.save("figs/evolution_quiver.gif", writer=writer, dpi=300)
-# plt.show()
-# plt.close()
