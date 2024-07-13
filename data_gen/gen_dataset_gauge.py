@@ -16,7 +16,6 @@ sns.set_theme()
 sns.set_context("paper")
 sns.set(font_scale=1.4)
 cmap = plt.get_cmap("twilight")
-# cmap = plt.get_cmap("hsv")
 
 # torch imports
 import torch
@@ -68,7 +67,7 @@ def energy_loss_gauge(grid_list, gauge, nbr):
     return loss
 
 
-def energy_loss_nima(grid_list, nbr):
+def energy_loss(grid_list, nbr):
     """
     Computes the energy of the configuration in the XY model.
 
@@ -99,7 +98,6 @@ torch.manual_seed(seed)
 np.random.seed(seed)
 
 data = np.load("data_n=10000.npy", allow_pickle=True)
-# data = np.load("/Users/manos/data/gauge/data_n=10000.npy", allow_pickle=True)
 X, Y = data.item()["x"], data.item()["y"]
 
 # init dataset
@@ -109,8 +107,8 @@ grid_size = 100
 edge_list = lattice_nbr(grid_size)
 
 # generate gauge field
-prod = 0.75  # 0.25
-add = 0  # .25
+prod = 0.75
+add = 0
 
 # apply gauge
 t = np.linspace(0, 1, grid_size)
@@ -129,7 +127,7 @@ for data_idx in range(N):
     s_e = X[data_idx, :]
     en = Y[data_idx]
 
-    loss = energy_loss_nima(torch.tensor(s_e), edge_list)
+    loss = energy_loss(torch.tensor(s_e), edge_list)
     loss_g = energy_loss_gauge(torch.tensor(s_e), gauge, edge_list)
     print(f"saved energy: {en}")
     print(f"original energy: {loss}\t gauge energy: {loss_g}")
@@ -139,5 +137,3 @@ for data_idx in range(N):
 
 data = {"x": X, "y": energies}
 np.save(f"data_n={N}_gauge.npy", data)
-# sns.histplot(energies)
-# plt.show()
