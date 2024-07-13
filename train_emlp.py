@@ -9,7 +9,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-
 import torchvision
 
 from torchinfo import summary
@@ -18,8 +17,6 @@ from torchinfo import summary
 from emlp.reps import V, Scalar, Vector
 from emlp.groups import SO
 import emlp
-
-# import emlp.nn.pytorch as nn
 
 import objax
 import jax.numpy as jnp
@@ -36,59 +33,11 @@ sns.set_theme()
 sns.set_context("paper")
 sns.set(font_scale=2)
 cmap = plt.get_cmap("twilight")
-# cmap_t = plt.get_cmap("turbo")
-# cmap = plt.get_cmap("hsv")
 color_plot = sns.cubehelix_palette(4, reverse=True, rot=-0.2)
 from matplotlib import cm, rc
 
 rc("text", usetex=True)
 rc("text.latex", preamble=r"\usepackage{amsmath}")
-
-
-def zeromean(X, mean=None, std=None):
-    "Expects data in NxCxWxH."
-    if mean is None:
-        mean = X.mean(axis=(0, 2, 3))
-        std = X.std(axis=(0, 2, 3))
-        std = torch.ones(std.shape)
-
-    X = torchvision.transforms.Normalize(mean, std)(X)
-    return X, mean, std
-
-
-def standardize(X, mean=None, std=None):
-    "Expects data in NxCxWxH."
-    if mean is None:
-        mean = X.mean(axis=(0, 2, 3))
-        std = X.std(axis=(0, 2, 3))
-
-    X = torchvision.transforms.Normalize(mean, std)(X)
-    return X, mean, std
-
-
-def standardize_y(Y, mean=None, std=None):
-    "Expects data in Nx1."
-    if mean is None:
-        mean = Y.min()
-        std = Y.max() - Y.min()
-
-    Y = (Y - mean) / std
-    return Y, mean, std
-
-
-def whiten(X, zca=None, mean=None, eps=1e-8):
-    "Expects data in NxCxWxH."
-    os = X.shape
-    X = X.reshape(os[0], -1)
-
-    if zca is None:
-        mean = X.mean(dim=0)
-        cov = np.cov(X, rowvar=False)
-        U, S, V = np.linalg.svd(cov)
-        zca = np.dot(U, np.dot(np.diag(1.0 / np.sqrt(S + eps)), U.T))
-    X = torch.Tensor(np.dot(X - mean, zca.T).reshape(os))
-    return X, zca, mean
-
 
 def main():
     def train_model(model):
@@ -121,15 +70,7 @@ def main():
                 test_losses.append(
                     np.mean([loss(jnp.array(x), jnp.array(y)) for (x, y) in testloader])
                 )
-                # # equiv_errors.append(
-                # #     np.mean(
-                # #         [
-                # #             (model(jnp.array(gx)) - jnp.array(gy)) ** 2
-                # #             for (gx, gy) in testloader
-                # #         ]
-                # #     )
-                # )
-        return train_losses, test_losses  # , equiv_errors
+        return train_losses, test_losses
 
     def evaluate_model(model, loader):
         @objax.Jit
@@ -145,12 +86,10 @@ def main():
     torch.manual_seed(seed)
     np.random.seed(seed)
 
-    data_norm = None  # "standard"
     grid_size = 100
     batch_size = 64
 
     data = np.load("data_n=10000.npy", allow_pickle=True)
-    # data = np.load("/Users/manos/data/gauge/data_n=10000.npy", allow_pickle=True)
     X, Y = data.item()["x"], data.item()["y"]
 
     tr_idx = np.random.choice(X.shape[0], int(0.8 * X.shape[0]), replace=False)
@@ -165,28 +104,12 @@ def main():
     X_te = torch.Tensor(X_te).view(-1, 1, grid_size, grid_size)
     Y_te = torch.Tensor(Y_te).view(-1, 1)
 
-    if data_norm == "standard":
-        X_tr, mean, std = standardize(X_tr)
-        X_te, _, _ = standardize(X_te, mean, std)
-    elif data_norm == "zeromean":
-        X_tr, mean, std = zeromean(X_tr)
-        X_te, _, _ = zeromean(X_te, mean, std)
-    elif data_norm == "whiten":
-        X_tr, mean, std = standardize(X_tr)
-        X_te, _, _ = standardize(X_te, mean, std)
-
-        X_tr, zca, mean = whiten(X_tr)
-        X_te, _, _ = whiten(X_te, zca, mean)
-    elif data_norm == "y":
-        Y_tr, mean, std = standardize_y(Y_tr)
-        Y_te, _, _ = standardize_y(Y_te, mean, std)
-
     bs_tr = X_tr.shape[0]
     bs_te = X_te.shape[0]
 
     # generate gauge field
-    prod = 0.75  # 0.25
-    add = 0  # .25
+    prod = 0.75
+    add = 0
 
     # apply gauge
     t = np.linspace(0, 1, grid_size)
@@ -232,8 +155,6 @@ def main():
     rep_out = 1 * Scalar
 
     model = emlp.nn.EMLP(rep_in=rep_in, rep_out=rep_out, group=G)
-    # model = nn.EMLP(rep_in=rep_in, rep_out=rep_out, group=G)
-    # summary(model, input_size=(batch_size, grid_size * grid_size * 2))
 
     tr, ts = train_model(model)
     print(tr, ts)
