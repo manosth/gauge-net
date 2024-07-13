@@ -15,8 +15,6 @@ sns.set_theme()
 sns.set_context("paper")
 sns.set(font_scale=2)
 cmap = plt.get_cmap("twilight")
-cmap_t = plt.get_cmap("turbo")
-# cmap = plt.get_cmap("hsv")
 color_plot = sns.cubehelix_palette(4, reverse=True, rot=0.2)
 from matplotlib import cm, rc
 
@@ -34,8 +32,7 @@ seed = 13
 torch.manual_seed(seed)
 np.random.seed(seed)
 
-data = np.load("/Users/manos/data/gauge/data_n=10000.npy", allow_pickle=True)
-# data = np.load("data_n=10000.npy", allow_pickle=True)
+data = np.load("data_n=10000.npy", allow_pickle=True)
 X_tr, Y_tr = torch.Tensor(data.item()["x"]), torch.Tensor(data.item()["y"])
 
 grid_size = 100
@@ -53,10 +50,8 @@ for idx in indices:
     quiver_n = ax_n.quiver(X, Y, s_n[0], s_n[1], grid, cmap=cmap, scale=40)
     cbar = plt.colorbar(quiver_n, ax=ax_n, ticks=[0 + 0.05, np.pi, 2 * np.pi - 0.05])
     cbar.ax.set_yticklabels(["0", r"$\pi$", r"$2\pi$"])
-    # plt.title("High energy state")
     plt.title(r"$H(\bm{s})=$" + rf"${Y_tr[idx].item():0.8f}$")
     ax_n.set_xticklabels([])
     ax_n.set_yticklabels([])
-    plt.savefig("figs/data_sample=" + str(idx) + ".pdf", bbox_inches="tight")
     plt.show()
     plt.close()
