@@ -15,8 +15,6 @@ sns.set_theme()
 sns.set_context("paper")
 sns.set(font_scale=2)
 cmap = plt.get_cmap("twilight")
-cmap_t = plt.get_cmap("turbo")
-# cmap = plt.get_cmap("hsv")
 color_plot = sns.cubehelix_palette(4, reverse=True, rot=0.2)
 from matplotlib import cm, rc
 
@@ -34,11 +32,9 @@ seed = 13
 torch.manual_seed(seed)
 np.random.seed(seed)
 
-data = np.load("/Users/manos/data/gauge/data_n=10000.npy", allow_pickle=True)
-# data = np.load("data_n=10000.npy", allow_pickle=True)
+data = np.load("data_n=10000.npy", allow_pickle=True)
 X_tr, Y_tr = torch.Tensor(data.item()["x"]), torch.Tensor(data.item()["y"])
-print((Y_tr.max() - Y_tr.min()).abs())
-print(X_tr.shape)
+
 plt.figure()
 sns.histplot(
     Y_tr, bins=100, stat="probability", kde=True, color=color_plot[1], ec=color_plot[0]
@@ -73,11 +69,9 @@ for idx in range(X_tr.shape[0]):
             quiver_n, ax=ax_n, ticks=[0 + 0.05, np.pi, 2 * np.pi - 0.05]
         )
         cbar.ax.set_yticklabels(["0", r"$\pi$", r"$2\pi$"])
-        # plt.title("High energy state")
         plt.title(r"$H(\bm{s})=$" + rf"${Y_tr[idx].item():0.8f}$")
         ax_n.set_xticklabels([])
         ax_n.set_yticklabels([])
-        # plt.savefig("figs/energy_high_idx=" + str(idx) + ".pdf", bbox_inches="tight")
         plt.show()
         plt.close()
 
@@ -93,12 +87,9 @@ for idx in range(X_tr.shape[0]):
             quiver_n, ax=ax_n, ticks=[0 + 0.05, np.pi, 2 * np.pi - 0.05]
         )
         cbar.ax.set_yticklabels(["0", r"$\pi$", r"$2\pi$"])
-        # plt.title("Low energy state")
-        # plt.title(r"$J(\bm{s})=$" + str(Y_tr[idx].item()))
         plt.title(r"$H(\bm{s})=$" + rf"${Y_tr[idx].item():0.8f}$")
         ax_n.set_xticklabels([])
         ax_n.set_yticklabels([])
-        # plt.savefig("figs/energy_low_idx=" + str(idx) + ".pdf", bbox_inches="tight")
         plt.show()
         plt.close()
 
@@ -114,12 +105,9 @@ for idx in range(X_tr.shape[0]):
             quiver_n, ax=ax_n, ticks=[0 + 0.05, np.pi, 2 * np.pi - 0.05]
         )
         cbar.ax.set_yticklabels(["0", r"$\pi$", r"$2\pi$"])
-        # plt.title("Mid energy state")
-        # plt.title(r"$J(\bm{s})=$" + str(Y_tr[idx].item()))
         plt.title(r"$H(\bm{s})=$" + rf"${Y_tr[idx].item():0.8f}$")
         ax_n.set_xticklabels([])
         ax_n.set_yticklabels([])
-        # plt.savefig("figs/energy_mid_idx=" + str(idx) + ".pdf", bbox_inches="tight")
         plt.show()
         plt.close()
 
