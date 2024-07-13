@@ -16,7 +16,6 @@ sns.set_theme()
 sns.set_context("paper")
 sns.set(font_scale=1.4)
 cmap = plt.get_cmap("twilight")
-# cmap = plt.get_cmap("hsv")
 
 # torch imports
 import torch
@@ -61,7 +60,7 @@ class OptimizeField(nn.Module):
         return self.grid_list
 
 
-def energy_loss_nima(grid_list, nbr):
+def energy_loss(grid_list, nbr):
     """
     Computes the energy of the configuration in the XY model.
 
@@ -116,19 +115,11 @@ for data_idx in range(N):
     gamma = (final_lr / lr) ** (1 / updates)
     step_size = epochs // updates
     schd = optim.lr_scheduler.StepLR(opt, step_size=step_size, gamma=gamma)
-    # if lr >= 10:
-    #     schd = optim.lr_scheduler.MultiStepLR(
-    #         opt, [int(0.7 * epochs), int(0.85 * epochs)], gamma=0.1
-    #     )
-    # elif lr >= 1:
-    #     schd = optim.lr_scheduler.MultiStepLR(opt, [int(0.9 * epochs)], gamma=0.1)
-    # else:
-    #     schd = optim.lr_scheduler.MultiStepLR(opt, [int(0.9 * epochs)], gamma=1)
-
+    
     for epoch in range(1, epochs + 1):
         model.train()
         s_e = model()
-        loss = energy_loss_nima(s_e, model.get_nbr())
+        loss = energy_loss(s_e, model.get_nbr())
 
         opt.zero_grad()
         loss.backward()
@@ -145,5 +136,3 @@ for data_idx in range(N):
 
 data = {"x": fields, "y": energies, "lr": rates}
 np.save(f"data_n={N}.npy", data)
-# sns.histplot(energies)
-# plt.show()
